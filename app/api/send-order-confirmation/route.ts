@@ -478,7 +478,7 @@ export async function POST(request: NextRequest) {
       const adminHtml = buildAdminNotificationHtml(orderAny, items || [])
       const { error: adminEmailError } = await resend.emails.send({
         from: 'Cantina <onboarding@resend.dev>',
-        to: ['cantina@ccsbali.com'],
+        to: ['cantinacanggu@gmail.com'],
         subject: adminSubject,
         html: adminHtml,
       })

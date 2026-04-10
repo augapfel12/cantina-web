@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Cantina <onboarding@resend.dev>',
-      to: ['cantina@ccsbali.com'],
+      to: ['cantinacanggu@gmail.com'],
       subject,
       html,
     })
