@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/kitchen-report",
+      "schedule": "0 23 * * *"
+    }
+  ]
+}

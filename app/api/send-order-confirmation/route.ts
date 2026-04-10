@@ -9,6 +9,116 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+function buildAdminNotificationHtml(order: any, items: any[]): string {
+  const student = order.student
+  const school = order.school
+
+  const dietFlags: string[] = []
+  if (student?.diet_vegetarian) dietFlags.push('Vegetarisch')
+  if (student?.diet_vegan) dietFlags.push('Vegan')
+  if (student?.diet_gluten_free) dietFlags.push('Glutenfrei')
+  if (student?.diet_dairy_free) dietFlags.push('Laktosefrei')
+  const dietStr = dietFlags.length > 0 ? dietFlags.join(', ') : 'Keine'
+
+  const grandTotal = order.total_idr
+
+  const tableRows = items.map((item: any) => {
+    let lunchName = '-'
+    if (item.lunch_choice === 'menu1') {
+      lunchName = item.menu_day?.menu1_name || 'Menu 1'
+    } else if (item.lunch_choice === 'menu2') {
+      lunchName = item.menu_day?.menu2_name || 'Menu 2'
+    } else if (item.lunch_choice === 'daily_available') {
+      lunchName = item.daily_available?.name || 'Daily Special'
+    }
+    const snackName = item.snack?.name || '-'
+    const juiceName = item.juice?.name || '-'
+    return `
+      <tr>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px;">${formatDate(item.date)}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px;">${lunchName}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; text-align: center;">${snackName}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f3f4f6; font-size: 13px; text-align: center;">${juiceName}</td>
+      </tr>`
+  }).join('')
+
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Neue Bestellung - Admin</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9fafb;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background:#F97316;padding:20px 28px;">
+            <div style="font-size:20px;font-weight:800;color:#ffffff;">Neue Bestellung eingegangen</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">Cantina Admin Benachrichtigung</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px;">
+            <!-- Student Info -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:16px 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="50%" style="padding-bottom:8px;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Schüler</div>
+                        <div style="font-size:14px;font-weight:600;color:#111827;">${student?.student_name || '-'}</div>
+                      </td>
+                      <td width="50%" style="padding-bottom:8px;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Klasse</div>
+                        <div style="font-size:14px;font-weight:600;color:#111827;">${student?.class_name || '-'}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="50%">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Schule</div>
+                        <div style="font-size:14px;font-weight:600;color:#111827;">${school?.name || '-'}</div>
+                      </td>
+                      <td width="50%">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Diät</div>
+                        <div style="font-size:14px;font-weight:600;color:#111827;">${dietStr}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            <!-- Info row -->
+            <p style="font-size:14px;color:#374151;margin:0 0 16px 0;">
+              <strong>Bestellte Tage:</strong> ${items.length} &nbsp;&nbsp;
+              <strong>Gesamtbetrag:</strong> ${formatIDR(grandTotal)}
+            </p>
+            <!-- Items table -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:24px;">
+              <tr style="background:#F97316;">
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;">Datum</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff;text-align:left;">Lunch</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff;text-align:center;">Snack</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:#fff;text-align:center;">Juice</th>
+              </tr>
+              ${tableRows || '<tr><td colspan="4" style="padding:12px;text-align:center;color:#9ca3af;">Keine Artikel</td></tr>'}
+            </table>
+            <!-- Total -->
+            <p style="font-size:18px;font-weight:800;color:#111827;margin:0 0 24px 0;">Total: ${formatIDR(grandTotal)}</p>
+            <!-- Admin link -->
+            <a href="https://cantina-web-three.vercel.app/admin" style="display:inline-block;background:#F97316;color:#ffffff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;">
+              Admin Dashboard öffnen →
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 function formatIDR(amount: number): string {
@@ -298,7 +408,7 @@ export async function POST(request: NextRequest) {
           diet_gluten_free,
           diet_dairy_free
         ),
-        school:schools(name)
+        school:schools(name, slug)
       `)
       .eq('id', orderId)
       .single()
@@ -358,6 +468,24 @@ export async function POST(request: NextRequest) {
     if (emailError) {
       console.error('Resend error:', emailError)
       return NextResponse.json({ error: 'Failed to send email', detail: emailError }, { status: 500 })
+    }
+
+    // Send admin notification for CCS school only
+    const schoolSlug = (school as any)?.slug
+    if (schoolSlug === 'ccs') {
+      const className = student?.class_name || ''
+      const adminSubject = `Neue Bestellung - ${studentName} (${className}) - ${schoolName}`
+      const adminHtml = buildAdminNotificationHtml(orderAny, items || [])
+      const { error: adminEmailError } = await resend.emails.send({
+        from: 'Cantina <onboarding@resend.dev>',
+        to: ['cantina@ccsbali.com'],
+        subject: adminSubject,
+        html: adminHtml,
+      })
+      if (adminEmailError) {
+        console.error('Admin notification email error:', adminEmailError)
+        // Non-fatal: parent email already sent, just log the error
+      }
     }
 
     return NextResponse.json({ success: true, emailId: emailData?.id })

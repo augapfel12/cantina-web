@@ -25,6 +25,8 @@ export default function KitchenPage() {
   const [kitchenItems, setKitchenItems] = useState<KitchenItem[]>([])
   const [loading, setLoading] = useState(false)
   const [menuDay, setMenuDay] = useState<{ menu1_name: string; menu2_name: string } | null>(null)
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
     supabase
@@ -123,25 +125,71 @@ export default function KitchenPage() {
 
   const categories = ['Lunch', 'Snack', 'Juice']
 
+  async function handleSendKitchenReport() {
+    setEmailSending(true)
+    setEmailStatus(null)
+    try {
+      const res = await fetch('/api/send-kitchen-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: selectedDate }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setEmailStatus({ type: 'error', message: data.error || 'Fehler beim Senden.' })
+      } else {
+        setEmailStatus({ type: 'success', message: 'Küchenbericht erfolgreich gesendet!' })
+      }
+    } catch {
+      setEmailStatus({ type: 'error', message: 'Netzwerkfehler beim Senden.' })
+    } finally {
+      setEmailSending(false)
+      setTimeout(() => setEmailStatus(null), 5000)
+    }
+  }
+
   return (
     <AdminGuard>
       <div className="p-6">
-        {/* Header with print button */}
+        {/* Header with action buttons */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Kitchen List</h1>
             <p className="text-gray-500 text-sm mt-0.5">Quantities to prepare</p>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-            Print
-          </button>
+          <div className="flex items-center gap-3 print:hidden">
+            <button
+              onClick={handleSendKitchenReport}
+              disabled={emailSending}
+              className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {emailSending ? 'Sende...' : 'Email Küchenbericht senden'}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print
+            </button>
+          </div>
         </div>
+
+        {/* Email status toast */}
+        {emailStatus && (
+          <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium print:hidden ${
+            emailStatus.type === 'success'
+              ? 'bg-green-50 border border-green-200 text-green-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            {emailStatus.message}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 print:hidden">
