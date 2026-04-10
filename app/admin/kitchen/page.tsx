@@ -58,7 +58,7 @@ export default function KitchenPage() {
           `)
           .eq('date', selectedDate)
           .eq('orders.school_id', selectedSchool)
-          .eq('orders.payment_status', 'paid'),
+          .in('orders.payment_status', ['paid', 'pending']),
         supabase
           .from('menu_days')
           .select('menu1_name, menu2_name')
@@ -237,7 +237,7 @@ export default function KitchenPage() {
           </div>
         ) : kitchenItems.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
-            No paid orders for this date and school.
+            No orders for this date and school.
           </div>
         ) : (
           <div className="space-y-4">

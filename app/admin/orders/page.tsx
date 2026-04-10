@@ -78,7 +78,7 @@ export default function OrdersPage() {
         `)
         .eq('date', selectedDate)
         .eq('orders.school_id', selectedSchool)
-        .eq('orders.payment_status', 'paid')
+        .in('orders.payment_status', ['paid', 'pending'])
 
       if (!items) {
         setSummary(null)
@@ -207,7 +207,7 @@ export default function OrdersPage() {
           </div>
         ) : !summary ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
-            No paid orders found for this date and school.
+            No orders found for this date and school.
           </div>
         ) : (
           <div className="space-y-4">

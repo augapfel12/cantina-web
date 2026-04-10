@@ -58,7 +58,7 @@ export default function StickersPage() {
           `)
           .eq('date', selectedDate)
           .eq('orders.school_id', selectedSchool)
-          .eq('orders.payment_status', 'paid'),
+          .in('orders.payment_status', ['paid', 'pending']),
         supabase.from('schools').select('name').eq('id', selectedSchool).single(),
         supabase
           .from('menu_days')
@@ -181,7 +181,7 @@ export default function StickersPage() {
           </div>
         ) : stickers.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500 print:hidden">
-            No paid orders with lunch for this date and school.
+            No orders with lunch for this date and school.
           </div>
         ) : (
           <div
