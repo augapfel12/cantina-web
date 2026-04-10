@@ -73,8 +73,7 @@ export default function OrdersPage() {
           ),
           daily_available(name),
           snacks(name),
-          juices(name),
-          menu_days:date(menu1_name, menu2_name)
+          juices(name)
         `)
         .eq('date', selectedDate)
         .eq('orders.school_id', selectedSchool)
