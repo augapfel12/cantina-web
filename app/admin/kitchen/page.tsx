@@ -136,9 +136,9 @@ export default function KitchenPage() {
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setEmailStatus({ type: 'error', message: data.error || 'Fehler beim Senden.' })
+        setEmailStatus({ type: 'error', message: data.error || data.detail?.message || 'Failed to send. Check Vercel logs.' })
       } else {
-        setEmailStatus({ type: 'success', message: 'Küchenbericht erfolgreich gesendet!' })
+        setEmailStatus({ type: 'success', message: 'Kitchen report sent to cantina@ccsbali.com!' })
       }
     } catch {
       setEmailStatus({ type: 'error', message: 'Netzwerkfehler beim Senden.' })
@@ -166,7 +166,7 @@ export default function KitchenPage() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              {emailSending ? 'Sende...' : 'Email Küchenbericht senden'}
+              {emailSending ? 'Sending...' : 'Send Kitchen Report'}
             </button>
             <button
               onClick={() => window.print()}

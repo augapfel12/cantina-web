@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { format, parseISO } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { enGB } from 'date-fns/locale'
 
 // CRON_SECRET=cantina-cron-2026
 
@@ -15,7 +15,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 function formatDateNice(dateStr: string): string {
   const d = parseISO(dateStr)
-  return format(d, 'EEEE, dd. MMMM yyyy', { locale: de })
+  return format(d, 'EEEE, dd MMMM yyyy', { locale: enGB })
 }
 
 function padRight(str: string, len: number): string {
@@ -102,7 +102,7 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
         `\n${'═'.repeat(47)}\n` +
         `${school.name.toUpperCase()}\n` +
         `${'═'.repeat(47)}\n` +
-        `Keine Bestellungen.\n`
+        `No orders.\n`
       )
       continue
     }
@@ -155,15 +155,15 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
       }
       if (student?.diet_vegetarian) {
         dietFlags.push('VEG')
-        dietCounts['Vegetarisch'] = (dietCounts['Vegetarisch'] || 0) + 1
+        dietCounts['Vegetarian'] = (dietCounts['Vegetarian'] || 0) + 1
       }
       if (student?.diet_gluten_free) {
         dietFlags.push('GF')
-        dietCounts['Glutenfrei'] = (dietCounts['Glutenfrei'] || 0) + 1
+        dietCounts['Gluten-Free'] = (dietCounts['Gluten-Free'] || 0) + 1
       }
       if (student?.diet_dairy_free) {
         dietFlags.push('DF')
-        dietCounts['Laktosefrei'] = (dietCounts['Laktosefrei'] || 0) + 1
+        dietCounts['Dairy-Free'] = (dietCounts['Dairy-Free'] || 0) + 1
       }
 
       packList.push({
@@ -188,7 +188,7 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
     const totalLunch = lunchRows.reduce((s, r) => s + r.count, 0)
 
     let section = `\n${'═'.repeat(47)}\n`
-    section += `MENGEN ÜBERSICHT - ${school.name.toUpperCase()}\n`
+    section += `QUANTITIES - ${school.name.toUpperCase()}\n`
     section += `${'═'.repeat(47)}\n\n`
 
     // Lunch
@@ -197,11 +197,11 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
       section += `  ${padRight(r.name + ':', 36)} ${padLeft(r.count + 'x', 4)}\n`
     }
     section += `  ${'─'.repeat(42)}\n`
-    section += `  ${padRight('TOTAL LUNCHBOXEN:', 36)} ${padLeft(totalLunch + 'x', 4)}\n\n`
+    section += `  ${padRight('TOTAL LUNCHBOXES:', 36)} ${padLeft(totalLunch + 'x', 4)}\n\n`
 
     // Diet
     if (Object.keys(dietCounts).length > 0) {
-      section += `DIÄT:\n`
+      section += `DIET:\n`
       for (const [label, cnt] of Object.entries(dietCounts)) {
         section += `  ${padRight(label + ':', 36)} ${padLeft(cnt + 'x', 4)}\n`
       }
@@ -228,7 +228,7 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
 
     // Pack list
     section += `${'═'.repeat(47)}\n`
-    section += `PACKLISTE (alphabetisch nach Klasse):\n`
+    section += `PACK LIST (alphabetical by class):\n`
     section += `${'═'.repeat(47)}\n`
     for (const p of packList) {
       const dietStr = p.diet.length > 0 ? p.diet.join('+') : ''
@@ -238,7 +238,7 @@ async function generateKitchenReport(date: string, schoolId?: string): Promise<s
     sections.push(section)
   }
 
-  const header = `CANTINA - TÄGLICHER KÜCHENREPORT\nDatum: ${formatDateNice(date)}\n`
+  const header = `CANTINA - DAILY KITCHEN REPORT\nDate: ${formatDateNice(date)}\n`
   return header + sections.join('\n')
 }
 
@@ -260,7 +260,7 @@ function buildKitchenReportHtml(reportText: string, date: string): string {
       <table width="700" cellpadding="0" cellspacing="0" border="0" style="max-width:700px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <tr>
           <td style="background:#F97316;padding:20px 28px;">
-            <div style="font-size:20px;font-weight:800;color:#ffffff;">CANTINA - Täglicher Küchenreport</div>
+            <div style="font-size:20px;font-weight:800;color:#ffffff;">CANTINA - Daily Kitchen Report</div>
             <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">${formatDateNice(date)}</div>
           </td>
         </tr>
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
     const reportText = await generateKitchenReport(date, schoolId)
     const html = buildKitchenReportHtml(reportText, date)
 
-    const subject = `Küchenreport - ${formatDateNice(date)}`
+    const subject = `Kitchen Report - ${formatDateNice(date)}`
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Cantina <onboarding@resend.dev>',
