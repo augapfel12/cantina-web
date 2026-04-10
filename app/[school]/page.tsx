@@ -783,6 +783,17 @@ export default function SchoolOrderPage() {
         throw new Error('Failed to save order items.')
       }
 
+      // Send order confirmation email (non-blocking)
+      try {
+        await fetch('/api/send-order-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        })
+      } catch (emailErr) {
+        console.warn('Order confirmation email failed (non-fatal):', emailErr)
+      }
+
       // Create Stripe checkout session
       const displayStudent = activeStudent ?? student
       const response = await fetch('/api/checkout', {
